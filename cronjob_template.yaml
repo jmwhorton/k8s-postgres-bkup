@@ -1,0 +1,48 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: postgres-bkup 
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: "Replace"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup 
+            image: jmwhorton/postgres-bkup:0.1.30
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: DATABASE_NAME
+              value: <postgres db name>
+            - name: DATABASE_USER
+              value: <postgres db root user, ex. postgres>
+            - name: DATABASE_HOST
+              value: <postgres hostname, ex. database>
+            - name: PGPASSWORD
+              valueFrom:
+                  secretKeyRef:
+                      name: <existing secret file with postgres info>
+                      key: <postgres root password key>
+            - name: STORAGE_USER
+              valueFrom:
+                  secretKeyRef:
+                      name: bkup-secret
+                      key: storage_user
+            - name: STORAGE_PASSWORD
+              valueFrom:
+                  secretKeyRef:
+                      name: bkup-secret
+                      key: storage_password
+            - name: STORAGE_HOST
+              valueFrom:
+                  secretKeyRef:
+                      name: bkup-secret
+                      key: storage_host
+            - name: STORAGE_PATH
+              valueFrom:
+                  secretKeyRef:
+                      name: bkup-secret
+                      key: storage_path
+          restartPolicy: OnFailure
